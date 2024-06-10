@@ -21,17 +21,34 @@ function readChunkType(stream, offset, chunkLength) {
 }
 
 function concatData(stream, offset, dataLength) {
-  console.log(offset)
-  console.log(dataLength)
-  const DataBuf = new Buffer.alloc(dataLength)
-  DataBuf.fill(stream, 0, offset, dataLength)
-  // DataBuf.copy(stream, 0, offset, dataLength)
-  zlib.deflate(DataBuf, (err, buf) => {
-    console.log(buf)
-  })
-  console.log(DataBuf)
-}
+  console.log(offset);
+  console.log("dataLength", dataLength);
 
+  // Allocate a buffer of the desired length
+  const DataBuf = Buffer.alloc(dataLength);
+  console.log("dataBuf Length", DataBuf.length)
+
+  // Copy data from the stream into the buffer starting at the given offset
+  const wow = stream.copy(DataBuf, 0, offset, offset + dataLength);
+  console.log(wow)
+  console.log(DataBuf[3773].toString(16))
+  // Deflate the buffer using zlib
+  zlib.inflate(DataBuf, (err, buf) => {
+    if (err) {
+      console.error("Error during deflation:", err);
+    } else {
+      console.log("in DEFLATE");
+      const decimalArr = Array.from(buf).map(byte => byte.toString(10))
+      // console.log(buf.toString('binary'));
+      // console.log(decimalArr)
+      for (let i = 0; i < decimalArr.length; i++) {
+        if (decimalArr[i] === 0) {
+          console.log(decimalArr[i])
+        }
+      }
+    }
+  });
+}
 function calcNextOffset(stream, offset, chunkLength, chunkLayout) {
   console.log("offset:", offset)
   console.log("chunkLayout:", chunkLayout)
@@ -52,7 +69,7 @@ function calcNextOffset(stream, offset, chunkLength, chunkLayout) {
     // for (let i = offset; i < dataLength + chunkLayout + offset; i++) {
     //   console.log(stream[i].toString(16).padStart(2, '0'))
     // }
-    concatData(stream, offset + 8, dataLength - 4)
+    concatData(stream, offset + 8, dataLength)
     console.log('------------------------------------------------------')
     return dataLength + chunkLayout + offset
   } else if (chunkType !== 'IEND') {
