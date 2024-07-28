@@ -1,16 +1,11 @@
 const fs = require('node:fs/promises')
 const { styleText } = require('node:util')
-const { deflate } = require('node:zlib')
+const { deflate, inflate } = require('node:zlib')
 const zlib = require('zlib')
 const readLine = require('readline')
-const hexMap = {
-  a: 10,
-  b: 11,
-  c: 12,
-  d: 13,
-  e: 14,
-  f: 15,
-}
+
+
+
 function readChunkType(stream, offset, chunkLength) {
   let typeString = ""
   for (let i = offset + 4; i < offset + 8; i++) {
@@ -26,7 +21,7 @@ function readIHDR(stream, dataLength, chunkLayout, offset) {
   console.log("DATA LENGTH:", dataLength)
   // console.log(stream.toString().padStart(0,'0'))
   console.log(stream[offset].toString().padStart(2, '0'))
-  console.log(stream)
+  // console.log(stream)
   for (let i = offset; i < offset + dataLength; i++) {
     console.log(stream[i].toString("16").padStart(2, '0'))
 
@@ -50,7 +45,7 @@ function concatData(stream, offset, dataLength) {
     if (err) {
       console.error("Error during deflation:", err);
     } else {
-      console.log("in DEFLATE");
+      console.log("in INFLATE");
       const decimalArr = Array.from(buf).map(byte => byte.toString(10))
       // console.log(buf.toString('binary'));
       console.log(decimalArr)
@@ -100,6 +95,12 @@ async function main() {
     let currentOffset = 8
     // let dataLength = 12
     // let decimal = 0
+
+    // Each ChunkLayout consisit of four parts:
+    // 1. LENGTH OF DATA FIELD 4 BYTE unsigned integer
+    // 2. Chunk Type a 4 BYTE read as ascii
+    // 3. Chunk DATA can be 0 length up to ~
+    // 4. CRC 4 BYTES - not included in Length  
     let chunkLayout = 12
     // console.log(stream.toString().padStart(0,'0'))
     while (currentOffset !== -1) {
